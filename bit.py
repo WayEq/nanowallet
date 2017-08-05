@@ -227,7 +227,7 @@ def prettyFormatAccountBalance(balance):
     return str(btc) + " BTC " + str(mBTC) + " mBTC " + str(uBTC) + " uBTC " + str(sats) + " satoshis"
 
 
-def getWalletBalanceFromSeed(mnemonic,password):
+def getWalletBalanceFromSeed(mnemonic,password,derivationPath):
 
 
     mnemonic = mnemonic.strip()
@@ -252,7 +252,7 @@ def getWalletBalanceFromSeed(mnemonic,password):
     lastChildIndexToSearch = 2
     for i in range(0, lastChildIndexToSearch):
         childKey, childChainCode, childPubKey = deriveChildFromPath(
-            path="m/0'/0/" + str(i),
+            path=derivationPath + str(i),
             parentPrivateKey=masterPrivKey,
             type=KeyType.PRIVATE,
             parentChainCode=masterChainCode)
@@ -296,10 +296,10 @@ def getWalletBalanceFromXpub(xPub,path):
 with open('seed.txt') as f:
     splitlines = f.read().splitlines()
     mnemonic = splitlines[0]
-    password = splitlines[1]
+    password = splitlines[1] # Optional, use a blank line if no path
+    path = splitlines[2]
 
-
-# getWalletBalanceFromSeed(mnemonic,password)
+getWalletBalanceFromSeed(mnemonic,password,path)
 
 with open('xpub.txt') as f:
     splitlines = f.read().splitlines()

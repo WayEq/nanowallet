@@ -223,7 +223,7 @@ def serialize_extended_key(version_bytes, depth, parent_key_fingerprint, child_n
 
 
 def query_address_info(address):
-    print("Querying: " + address)
+    debug_print("Querying: " + address)
     address_info_json = json.loads(
         urllib.request.urlopen("http://blockchain.info/rawaddr/" + address + "?limit=0").read())
     print("Address: " + address_info_json.get('address'))
@@ -271,7 +271,6 @@ def get_wallet_balance_from_seed(bip39_mnemonic, bip39_password, derivation_path
             parent_chain_code=master_chain_code)
 
         address = bitcoin.pubkey_to_address(bitcoin.compress(child_pub_key))
-        print(address)
         total_balance += query_address_info(address)
     print("Total Balance for this Wallet: " + pretty_format_account_balance(total_balance))
 
@@ -302,7 +301,6 @@ def get_wallet_balance_from_extended_public_key(extended_public_key, derivation_
             key_type=KeyType.PUBLIC,
             parent_chain_code=chainCode)
         address = bitcoin.pubkey_to_address(bitcoin.compress(childPubKey))
-        print(address)
         total_balance += query_address_info(address)
     print("Total Balance for this Wallet: " + pretty_format_account_balance(total_balance))
 

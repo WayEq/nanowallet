@@ -86,26 +86,26 @@ def mnemonic_to_entropy_and_checksum(words, lines):
 
 
 # TODO: combine these checksum methods
-def binary_verify_checksum(dataAndChecksum, checksumLen):
-    entropy = dataAndChecksum[0:-checksumLen]
-    checksum = dataAndChecksum[-checksumLen:]
+def binary_verify_checksum(data_and_checksum, checksum_length):
+    entropy = data_and_checksum[0:-checksum_length]
+    checksum = data_and_checksum[-checksum_length:]
     digest = bitcoin.bin_dbl_sha256(bytes(entropy))
-    computedCS = digest[0:checksumLen]
+    computed_checksum = digest[0:checksum_length]
     debug_print("computed: " + print_hex(digest))
-    if computedCS != checksum:
+    if computed_checksum != checksum:
         print("checksum failed!")
 
 
-def verify_checksum(dataAndChecksum, checksumLen):
-    entropy = dataAndChecksum[0:-checksumLen].tobytes()
-    checksum = dataAndChecksum[-checksumLen:].tobytes()[0] >> 8 - checksumLen
+def verify_checksum(data_and_checksum, checksum_length):
+    entropy = data_and_checksum[0:-checksum_length].tobytes()
+    checksum = data_and_checksum[-checksum_length:].tobytes()[0] >> 8 - checksum_length
     debug_print("data: " + print_hex(entropy))
     debug_print("checksum: " + str(checksum))
     m = hashlib.sha256()
     m.update(entropy)
     digest = m.digest()
-    computedCS = digest[0] >> 8 - checksumLen
-    if computedCS != checksum:
+    computed_checksum = digest[0] >> 8 - checksum_length
+    if computed_checksum != checksum:
         exit_with_error("checksum failed!")
 
 

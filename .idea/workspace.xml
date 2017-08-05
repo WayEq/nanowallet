@@ -13,6 +13,28 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file leaf-file-name="bit.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/bit.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-2912">
+              <caret line="106" column="21" lean-forward="false" selection-start-line="106" selection-start-column="21" selection-end-line="106" selection-end-column="21" />
+              <folding>
+                <element signature="e#20#34#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="_bitarray.py" pinned="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/Library/Caches/PyCharmCE2017.2/python_stubs/-2010535109/bitarray/_bitarray.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1029">
+              <caret line="132" column="8" lean-forward="false" selection-start-line="132" selection-start-column="8" selection-end-line="132" selection-end-column="8" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="seed.txt" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/seed.txt">
           <provider selected="true" editor-type-id="text-editor">
@@ -33,14 +55,12 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="bit.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/bit.py">
+      <file leaf-file-name="__init__.py" pinned="false" current-in-tab="false">
+        <entry file="file:///Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/bitarray/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="134">
-              <caret line="302" column="74" lean-forward="false" selection-start-line="302" selection-start-column="74" selection-end-line="302" selection-end-column="74" />
-              <folding>
-                <element signature="e#20#34#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="-277">
+              <caret line="48" column="6" lean-forward="false" selection-start-line="48" selection-start-column="6" selection-end-line="48" selection-end-column="6" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -48,7 +68,7 @@
       <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
         <entry file="file:///Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/bitcoin/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3795">
+            <state relative-caret-position="2314">
               <caret line="264" column="30" lean-forward="false" selection-start-line="264" selection-start-column="25" selection-end-line="264" selection-end-column="30" />
               <folding />
             </state>
@@ -90,6 +110,7 @@
       <find>lastchild</find>
       <find>deriving:</find>
       <find>extended private</find>
+      <find>print(addr</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -567,14 +588,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file:///Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/bitcoin/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3795">
-          <caret line="264" column="30" lean-forward="false" selection-start-line="264" selection-start-column="25" selection-end-line="264" selection-end-column="30" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/bitcoin/py3specials.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="189">
@@ -605,6 +618,14 @@
         </state>
       </provider>
     </entry>
+    <entry file="file:///Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/bitarray/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-277">
+          <caret line="48" column="6" lean-forward="false" selection-start-line="48" selection-start-column="6" selection-end-line="48" selection-end-column="6" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/seed.txt">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="45">
@@ -613,10 +634,26 @@
         </state>
       </provider>
     </entry>
+    <entry file="file:///Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/bitcoin/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2314">
+          <caret line="264" column="30" lean-forward="false" selection-start-line="264" selection-start-column="25" selection-end-line="264" selection-end-column="30" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Library/Caches/PyCharmCE2017.2/python_stubs/-2010535109/bitarray/_bitarray.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1029">
+          <caret line="132" column="8" lean-forward="false" selection-start-line="132" selection-start-column="8" selection-end-line="132" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/bit.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="134">
-          <caret line="302" column="74" lean-forward="false" selection-start-line="302" selection-start-column="74" selection-end-line="302" selection-end-column="74" />
+        <state relative-caret-position="-2912">
+          <caret line="106" column="21" lean-forward="false" selection-start-line="106" selection-start-column="21" selection-end-line="106" selection-end-column="21" />
           <folding>
             <element signature="e#20#34#0" expanded="true" />
           </folding>

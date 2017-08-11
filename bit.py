@@ -8,10 +8,13 @@ import json
 import re
 import struct
 import enum
-from bitarray import bitarray
+import os
+import bitarray
+
 from secp256k1 import PrivateKey, PublicKey
 
-debug_mode = False
+debug_mode = True
+query_blockchain = True
 
 # Constants
 bits_per_word = 11
@@ -19,14 +22,19 @@ acceptable_word_counts = [12, 15, 18, 21, 24]
 hardened_index_offset = 2 ** 31
 extended_public_key_version_bytes = b"\x04\x88\xB2\x1E"
 extended_private_key_version_bytes = b"\x04\x88\xAD\xE4"
+testnet_magic_byte = 0x6F
+public_magic_byte = 0x00
 
+class Network(enum.Enum):
+    MAINNET = 0
+    TESTNET = 1
 
 class KeyType(enum.Enum):
     PUBLIC = 0
     PRIVATE = 1
 
 
-class ShiftableBitArray(bitarray):
+class ShiftableBitArray(bitarray.bitarray):
     def __lshift__(self, count):
         return self[count:] + type(self)('0') * count
 
@@ -77,13 +85,19 @@ def mnemonic_to_entropy_and_checksum(words, lines):
     entropy_and_checksum = ShiftableBitArray(entropy_and_checksum_bit_size)
     entropy_and_checksum.setall(False)
     for num in nums:
-        or_target = bitarray(str('{0:011b}'.format(num)))
+        or_target = bitarray.bitarray(str('{0:011b}'.format(num)))
         while len(or_target) < len(entropy_and_checksum):
             or_target.insert(0, False)
         entropy_and_checksum = entropy_and_checksum << bits_per_word
         entropy_and_checksum = entropy_and_checksum | or_target
     return entropy_and_checksum
 
+
+def get_checksum_bits(data,checksum_bit_length):
+    m = hashlib.sha256()
+    m.update(data.tobytes())
+    digest = m.digest()
+    return digest[0] >> 8 - checksum_bit_length
 
 # TODO: combine these checksum methods
 def binary_verify_checksum(data_and_checksum, checksum_length):
@@ -222,12 +236,20 @@ def serialize_extended_key(version_bytes, depth, parent_key_fingerprint, child_n
     return bitcoin.changebase(serialized, 256, 58)
 
 
-def query_address_info(address):
+def query_address_info(address, network=Network.MAINNET):
+    if not query_blockchain:
+        return 0
     debug_print("Querying: " + address)
-    address_info_json = json.loads(
-        urllib.request.urlopen("http://blockchain.info/rawaddr/" + address + "?limit=0").read())
-    print("Address: " + address_info_json.get('address'))
-    balance = address_info_json.get('final_balance')
+
+    address_balance_url = "https://testnet.blockexplorer.com/api/addr/" + address if network == Network.TESTNET else "https://blockexplorer.com/api/addr/"
+    address_balance_url += address
+    print("url: " + address_balance_url)
+
+    request = urllib.request.Request(address_balance_url)
+    request.add_header('User-Agent',"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36")
+    address_info_json = json.loads(urllib.request.urlopen(request).read())
+    balance = address_info_json.get('balanceSat')
+
     print("Balance: " + str(balance))
     return balance
 
@@ -243,7 +265,7 @@ def pretty_format_account_balance(balance):
     return str(btc) + " BTC " + str(m_btc) + " mBTC " + str(u_btc) + " uBTC " + str(sats) + " satoshis"
 
 
-def get_wallet_balance_from_seed(bip39_mnemonic, bip39_password, derivation_path, last_child_index_to_search):
+def get_wallet_balance_from_seed(bip39_mnemonic, bip39_password, derivation_path, last_child_index_to_search, network=Network.MAINNET):
     bip39_mnemonic = bip39_mnemonic.strip()
     mnemonic_words = bip39_mnemonic.split()
     with open('words.txt') as f:
@@ -263,15 +285,17 @@ def get_wallet_balance_from_seed(bip39_mnemonic, bip39_password, derivation_path
     debug_print("Master Public Key (Compressed) : " + print_hex(compressed_master_public_key))
     print_extended_keys(master_chain_code, master_private_key, compressed_master_public_key, 0, 0, True, None)
     total_balance = 0
+
+    magic_byte = public_magic_byte if network == Network.MAINNET else testnet_magic_byte
     for i in range(0, last_child_index_to_search):
         child_key, child_chain_code, child_pub_key = derive_child_from_path(
             derivation_path=derivation_path + str(i),
             parent_key=master_private_key,
             key_type=KeyType.PRIVATE,
             parent_chain_code=master_chain_code)
-
-        address = bitcoin.pubkey_to_address(bitcoin.compress(child_pub_key))
-        total_balance += query_address_info(address)
+        address = bitcoin.pubkey_to_address(bitcoin.compress(child_pub_key),magic_byte)
+        print("\nAddress: " + address + "\n")
+        total_balance += query_address_info(address,network)
     print("Total Balance for this Wallet: " + pretty_format_account_balance(total_balance))
 
 
@@ -285,7 +309,7 @@ def deserialize_extended_key(extended_key):
     return version_bytes, depth, parent_key_fingerprint, child_number, chain_code, key
 
 
-def get_wallet_balance_from_extended_public_key(extended_public_key, derivation_path, last_child_index_to_search):
+def get_wallet_balance_from_extended_public_key(extended_public_key, derivation_path, last_child_index_to_search,network):
     (versionBytes, depth, parentKeyFingerprint, index, chainCode, pubKey) = deserialize_extended_key(
         extended_public_key)
     index = int.from_bytes(index, 'big')
@@ -294,16 +318,47 @@ def get_wallet_balance_from_extended_public_key(extended_public_key, derivation_
         index -= 2 ** 31
     debug_print("XPUB Info:  Depth: " + str(ord(depth)) + " index: " + str(index) + " hardened: " + str(hardened))
     total_balance = 0
+
+    magic_byte = public_magic_byte if network == Network.MAINNET else testnet_magic_byte
     for i in range(0, last_child_index_to_search):
         childKey, childChainCode, childPubKey = derive_child_from_path(
             derivation_path=derivation_path + str(i),
             parent_key=pubKey,
             key_type=KeyType.PUBLIC,
             parent_chain_code=chainCode)
-        address = bitcoin.pubkey_to_address(bitcoin.compress(childPubKey))
+        address = bitcoin.pubkey_to_address(bitcoin.compress(childPubKey),magic_byte)
         total_balance += query_address_info(address)
     print("Total Balance for this Wallet: " + pretty_format_account_balance(total_balance))
 
+def generateWallet(keySize=128):
+    random = os.urandom(int(keySize/8))
+    print("entropy: " + print_hex(random))
+    array = bitarray.bitarray()
+    for b in random:
+        array += bitarray.bitarray('{0:08b}'.format(b))
+
+    checksumSize = int(keySize / 32)
+    cs = get_checksum_bits(array, checksumSize)
+    # TODO: how to not hard code 4 bits of checksum?
+    cs_binary = '{0:04b}'.format(cs)
+    print("checksum: " + cs_binary)
+    array += cs_binary
+    with open('words.txt') as f:
+        lines = f.read().splitlines()
+    mnemonic = []
+    while len(array) > 0:
+        word = ShiftableBitArray(16)
+        word.setall(False)
+        word[5:] = array[:bits_per_word]
+        array = array[bits_per_word:]
+        tobytes = word.tobytes()
+        mnemonic_word = lines[int.from_bytes(tobytes, 'big')]
+        mnemonic.append(mnemonic_word)
+    mnemonic_phrase = ' '.join(mnemonic)
+    validate_mnemonic(mnemonic,lines)
+
+    verify_checksum(mnemonic_to_entropy_and_checksum(mnemonic_phrase,lines), int(len(mnemonic) / 3))
+    print (mnemonic_phrase)
 
 #### Main program
 
@@ -314,11 +369,13 @@ with open('seed.txt') as f:
     path = splitlines[2]
     search_breadth = splitlines[3]
 
-get_wallet_balance_from_seed(mnemonic, password, path, int(search_breadth))
+#get_wallet_balance_from_seed(mnemonic, password, path, int(search_breadth),Network.TESTNET)
 
 with open('xpub.txt') as f:
     splitlines = f.read().splitlines()
     xPub = splitlines[0]
     path = splitlines[1]
     search_breadth = splitlines[2]
-get_wallet_balance_from_extended_public_key(xPub, path, int(search_breadth))
+get_wallet_balance_from_extended_public_key(xPub, path, int(search_breadth),Network.MAINNET)
+#generateWallet()
+

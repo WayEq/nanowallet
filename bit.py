@@ -1,3 +1,26 @@
+# MIT License
+#
+# Copyright (c) 2017 https://github.com/WayEq
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+
 #!/usr/bin/python 
 
 import bitcoin
@@ -23,6 +46,8 @@ extended_public_key_version_bytes = b"\x04\x88\xB2\x1E"
 extended_private_key_version_bytes = b"\x04\x88\xAD\xE4"
 testnet_magic_byte = 0x6F
 public_magic_byte = 0x00
+testnet_wif_prefix = 0xEF
+public_wif_prefix = 0x80
 
 
 class Network(enum.Enum):
@@ -162,7 +187,7 @@ def hmac_digest_and_split(key, data, key_type='sha512'):
     return key, chain_code
 
 
-def derive_child_from_path(derivation_path, parent_key, key_type, parent_chain_code):
+def derive_child_from_path(derivation_path, parent_key, key_type, parent_chain_code,network=Network.MAINNET):
     debug_print("Deriving: " + derivation_path)
     match = re.fullmatch(r"m(/\d+'?)+", derivation_path)
     if match is None:
@@ -177,18 +202,24 @@ def derive_child_from_path(derivation_path, parent_key, key_type, parent_chain_c
             hardened = True
             path_segment = path_segment[:-1]
         parent_key, parent_chain_code, pubkey = derive_child(parent_key, parent_chain_code, int(path_segment), depth,
-                                                             key_type, hardened)
+                                                             key_type, hardened,False,network)
     child_key = parent_key
     child_chain_code = parent_chain_code
     return child_key, child_chain_code, pubkey
 
 
-def derive_child(parent_key, parent_chain_code, index, depth, key_type, hardened=False, master=False):
+def derive_child(parent_key, parent_chain_code, index, depth, key_type, hardened=False, master=False,network=Network.MAINNET):
     if hardened:
         index += hardened_index_offset
     (childKey, childChainCode) = derive_child_key(parent_key, parent_chain_code, index, key_type, hardened)
     debug_print("Derived Child key: " + print_hex(childKey))
     debug_print("Derived Child chain code: " + print_hex(childChainCode))
+
+    wif = generate_wif_from_key(childKey, Network.MAINNET,False)
+    debug_print("wif: " + wif)
+
+    wif_compressed = generate_wif_from_key(childKey,Network.MAINNET,True)
+    debug_print("wif (compressed): " + wif_compressed)
 
     if key_type == KeyType.PRIVATE:
         child_pub_key = bitcoin.privkey_to_pubkey(childKey)
@@ -200,6 +231,16 @@ def derive_child(parent_key, parent_chain_code, index, depth, key_type, hardened
     else:
         child_pub_key = childKey
     return childKey, childChainCode, child_pub_key
+
+
+def generate_wif_from_key(childKey, network,compressed=True):
+    prefix = public_wif_prefix if network == Network.MAINNET else testnet_wif_prefix
+    wif_binary = prefix.to_bytes(1,'big') + childKey
+    if compressed:
+        wif_binary += 0x01.to_bytes(1,'big')
+    checksum = bitcoin.bin_dbl_sha256(wif_binary)[0:4]
+    wif = bitcoin.changebase(wif_binary + checksum, 256, 58)
+    return wif
 
 
 def print_extended_keys(child_chain_code, child_key, compressed_child_pub_key, depth, index, master,
@@ -291,7 +332,8 @@ def get_wallet_balance_from_seed(bip39_mnemonic, bip39_password, derivation_path
             derivation_path=derivation_path + str(i),
             parent_key=master_private_key,
             key_type=KeyType.PRIVATE,
-            parent_chain_code=master_chain_code)
+            parent_chain_code=master_chain_code,
+            network=network)
         address = bitcoin.pubkey_to_address(bitcoin.compress(child_pub_key), magic_byte)
         print("\nAddress: " + address + "\n")
         total_balance += query_address_info(address, network)
@@ -325,10 +367,15 @@ def get_wallet_balance_from_extended_public_key(extended_public_key, derivation_
             derivation_path=derivation_path + str(i),
             parent_key=pubKey,
             key_type=KeyType.PUBLIC,
-            parent_chain_code=chainCode)
+            parent_chain_code=chainCode,
+            network=network)
         address = bitcoin.pubkey_to_address(bitcoin.compress(child_pub_key), magic_byte)
         total_balance += query_address_info(address)
     print("Total Balance for this Wallet: " + pretty_format_account_balance(total_balance))
+
+def generate_transaction(in_transaction,vout,script_sig,sequence,to_address,amount):
+    version=1
+    locktime=0
 
 
 def generate_wallet(key_size=128):
@@ -370,13 +417,13 @@ with open('seed.txt') as f:
     path = splitlines[2]
     search_breadth = splitlines[3]
 
-# get_wallet_balance_from_seed(mnemonic, password, path, int(search_breadth),Network.TESTNET)
+get_wallet_balance_from_seed(mnemonic, password, path, int(search_breadth),Network.TESTNET)
 
 with open('xpub.txt') as f:
     splitlines = f.read().splitlines()
     xPub = splitlines[0]
     path = splitlines[1]
     search_breadth = splitlines[2]
-get_wallet_balance_from_extended_public_key(xPub, path, int(search_breadth), Network.MAINNET)
+# get_wallet_balance_from_extended_public_key(xPub, path, int(search_breadth), Network.MAINNET)
 # generateWallet()
 

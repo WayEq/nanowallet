@@ -2,6 +2,8 @@
 
 **This can be used to check balances on the block chain.**
 
+Disclaimer: I cannot and do not guarantee that using this tool will not lose your money or compromise your privacy. By using this tool, you accept all responsibility for its use and behavior.
+
 Method 1 (From an extended public key):
 
 _See example file xpub-sample.txt_
